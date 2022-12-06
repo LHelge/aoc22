@@ -13,7 +13,8 @@ fn main() {
     let reader = BufReader::new(file);
 
     // Do stuff
-    let mut result = 0;
+    let mut result1 = 0;
+    let mut result2 = 0;
     for line in reader.lines() {
         let line = line.unwrap();
 
@@ -21,7 +22,7 @@ fn main() {
     }
 
     // print result
-    println!("Answer part one: {}", result);
-    println!("Answer part two: {}", result);
+    println!("Answer part one: {}", result1);
+    println!("Answer part two: {}", result2);
 }
 ```
