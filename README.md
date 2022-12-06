@@ -21,7 +21,7 @@ fn main() {
     }
 
     // print result
-    println!("Answer part one: {}", result)
-    println!("Answer part two: {}", result)
+    println!("Answer part one: {}", result);
+    println!("Answer part two: {}", result);
 }
 ```
