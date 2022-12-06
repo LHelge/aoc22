@@ -9,7 +9,6 @@ fn priority(item: char) -> Option<u32> {
     }
 }
 
-
 fn main() {
     // Read file
     let file = File::open("input.txt").unwrap();
@@ -19,15 +18,14 @@ fn main() {
     let mut result1: u32 = 0;
     let mut result2: u32 = 0;
 
-    let mut group: Vec<&str> = Vec::new();
+    let mut group: Vec<String> = Vec::new();
     for line in reader.lines() {
         let line = line.unwrap();
-        let items = line.as_str();
 
         // Part 1
-        let count = items.len();
-        let first_compartment = &items[..count/2];
-        let second_compartment = &items[count/2..];
+        let count = line.len();
+        let first_compartment = &line[..count/2];
+        let second_compartment = &line[count/2..];
         for c in first_compartment.chars() {
             if second_compartment.contains(c) {
                 result1 += priority(c).unwrap_or(0);
@@ -36,11 +34,12 @@ fn main() {
         }
 
         // Part 2
-        group.push(items.clone());
-        if group.len() >= 3 {
+        group.push(line.clone());
+        if group.len() == 3 {
             for c in group[0].chars() {
                 if group[1].contains(c) && group[2].contains(c) {
                     result2 += priority(c).unwrap_or(0);
+                    break;
                 }
             }
             group.clear();
