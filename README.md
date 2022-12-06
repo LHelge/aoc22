@@ -9,16 +9,30 @@ use std::io::{BufRead, BufReader};
 
 fn main() {
     // Read file
-    let file = File::open("input.txt").unwrap();
+    //let filename = "input.txt";
+    let filename = "input_example.txt";
+    let file = match File::open(filename) {
+        Ok(f) => f,
+        Err(e) => panic!("Problem reading file {}: {}", filename, e)
+    };
     let reader = BufReader::new(file);
 
     // Do stuff
     let mut result1 = 0;
     let mut result2 = 0;
-    for line in reader.lines() {
-        let line = line.unwrap();
+    for (i, line) in reader.lines().enumerate() {
+        let line = match line {
+            Ok(l) => l,
+            Err(e) => panic!("Bad input on line {}: {}", i, e)
+        };
 
-        // Do stuff per line
+        println!("{}", line);
+
+        // Solve Part 1
+        result1 += 1;
+
+        // Solve Part 2
+        result2 += 1;
     }
 
     // print result
