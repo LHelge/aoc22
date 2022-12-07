@@ -29,52 +29,79 @@ impl Command {
     }
 }
 
-struct DirectoryObject {
-    name: String,
-    content: Vec<FileSystemObject>,
-    parent: Option<&DirectoryObject>
+
+
+enum FileSystemObject {
+    Directory {
+        name: String, 
+        content: Vec<FileSystemObject>,
+        size: Option<usize>,
+        parent: Option<*mut FileSystemObject>
+    },
+    File {
+        name: String,
+        size: usize
+    }
 }
 
-impl DirectoryObject {
-    fn new(name: String) -> Self {
-        Self {
-            name: name,
+
+impl FileSystemObject {
+    fn new_file(name: &str, size: usize) -> Self {
+        FileSystemObject::File {
+            name: String::from(name),
+            size: size
+        }
+    }
+
+    fn new_dir(name: &str, parent: Option<*mut FileSystemObject>) -> Self {
+        FileSystemObject::Directory { 
+            name: String::from(name), 
             content: Vec::new(),
-            parent: None
+            size: None, 
+            parent: parent
         }
     }
 }
 
-struct FileObject {
-    size: usize,
-    name: String
-}
-
-enum FileSystemObject {
-    Directory(DirectoryObject),
-    File(FileObject)
-}
-
 struct FileSystem {
-    root: DirectoryObject,
-    cwd: &DirectoryObject
+    cwd: *mut FileSystemObject,
+    root: FileSystemObject
 }
+
 
 impl FileSystem {
     fn new() -> Self {
-        let mut root = DirectoryObject::new(String::from("/"));
+        let mut fs_root = FileSystemObject::new_dir("/", None);
 
-        Self { 
-            root: root, 
-            cwd: &root }
+        Self {
+            cwd: &mut fs_root as *mut FileSystemObject, 
+            root: fs_root
+        }
     }
+
+    fn cd(&mut self, dir: &str) {
+        match dir {
+            "/" => self.cwd = &mut self.root as *mut FileSystemObject,
+            ".." => {
+                if let FileSystemObject::Directory(_,_,_,parent) = self.cwd {
+                    self.cwd = parent;
+                }
+            },
+            d => {
+
+            }
+        }
+    }
+
 }
 
-fn parse_command(cmd: &Command, filesystem: &mut FileSystem) -> &mut FileSystem {
+
+
+fn parse_command(cmd: &Command, filesystem: FileSystem) -> FileSystem {
 
     match cmd.command.as_str() {
         "cd" => println!("Change directory to {}", cmd.arguments[0]),
-        "ls" => println!("Listed directory contents {}", cmd.outputs),
+        "ls" => println!("Listed directory contents {:?}", cmd.outputs),
         _ => panic!("Unsupported command: {}", cmd.command)
     }
 
@@ -92,6 +119,7 @@ fn main() {
     let reader = BufReader::new(file);
 
     // Do stuff
+    
     let mut filesystem = FileSystem::new();
 
     let mut result1 = 0;
@@ -114,7 +142,7 @@ fn main() {
                 let cmd = Command::new(&command);
                 command.clear();
 
-                filesystem = parse_command(&cmd, &mut filesystem)
+                filesystem = parse_command(&cmd, filesystem)
             }
         }
         command.push(line.clone());
