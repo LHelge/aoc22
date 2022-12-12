@@ -29,56 +29,15 @@ impl Command {
     }
 }
 
-struct DirectoryObject {
-    name: String,
-    content: Vec<FileSystemObject>,
-    parent: Option<&DirectoryObject>
-}
 
-impl DirectoryObject {
-    fn new(name: String) -> Self {
-        Self {
-            name: name,
-            content: Vec::new(),
-            parent: None
-        }
-    }
-}
-
-struct FileObject {
-    size: usize,
-    name: String
-}
-
-enum FileSystemObject {
-    Directory(DirectoryObject),
-    File(FileObject)
-}
-
-struct FileSystem {
-    root: DirectoryObject,
-    cwd: &DirectoryObject
-}
-
-impl FileSystem {
-    fn new() -> Self {
-        let mut root = DirectoryObject::new(String::from("/"));
-
-        Self { 
-            root: root, 
-            cwd: &root }
-    }
-}
-
-fn parse_command(cmd: &Command, filesystem: &mut FileSystem) -> &mut FileSystem {
+fn parse_command(cmd: &Command) {
 
     match cmd.command.as_str() {
         "cd" => println!("Change directory to {}", cmd.arguments[0]),
-        "ls" => println!("Listed directory contents {}", cmd.outputs),
+        "ls" => println!("Listed directory contents {:?}", cmd.outputs),
         _ => panic!("Unsupported command: {}", cmd.command)
     }
 
-    filesystem
 }
 
 fn main() {
@@ -92,7 +51,6 @@ fn main() {
     let reader = BufReader::new(file);
 
     // Do stuff
-    let mut filesystem = FileSystem::new();
 
     let mut result1 = 0;
     let mut result2 = 0;
@@ -114,7 +72,7 @@ fn main() {
                 let cmd = Command::new(&command);
                 command.clear();
 
-                filesystem = parse_command(&cmd, &mut filesystem)
+                parse_command(&cmd)
             }
         }
         command.push(line.clone());
