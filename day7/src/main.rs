@@ -1,44 +1,44 @@
+use std::collections::HashMap;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 
-#[derive(Debug)]
-struct Command {
-    command: String,
-    arguments: Vec<String>,
-    outputs: Vec<String>
+#[derive(Debug, Clone)]
+enum Command<'a> {
+    Cd(Cd<'a>),
+    Ls(Vec<FsObj<'a>>)
 }
 
-impl Command {
-    fn new(input: &Vec<String>) -> Self {
+#[derive(Debug, Clone)]
+enum Cd<'a> {
+    Root,
+    Up,
+    Down(&'a str)
+}
+
+#[derive(Debug, Clone)]
+enum FsObj<'a> {
+    File(&'a str, usize),
+    Dir(&'a str)
+}
+
+impl<'a> Command<_> {
+    fn new<'a>(input: &'a Vec<String>) -> Self {
         let parts: Vec<&str> = input[0].split(' ').collect();
-
-        let mut cmd = Self { 
-            command: String::from(parts[1]),
-            arguments: Vec::new(), 
-            outputs: Vec::new() 
-        };
-
-        for n in 2..parts.len() {
-            cmd.arguments.push(String::from(parts[n]));
+        
+        match parts[1] {
+            "cd" => match parts[2] {
+                "/" => Command::Cd(Cd::Root),
+                ".." => Command::Cd(Cd::Up),
+                dir => Command::Cd(Cd::Down(dir))
+            },
+            "ls" => {
+                Command::Ls(vec![])
+            },
+            _ => panic!("Unknown command")
         }
-        for n in 1..input.len() {
-            cmd.outputs.push(input[n].clone());
-        }
-
-        cmd
     }
 }
 
-
-fn parse_command(cmd: &Command) {
-
-    match cmd.command.as_str() {
-        "cd" => println!("Change directory to {}", cmd.arguments[0]),
-        "ls" => println!("Listed directory contents {:?}", cmd.outputs),
-        _ => panic!("Unsupported command: {}", cmd.command)
-    }
-
-}
 
 fn main() {
     // Read file
@@ -56,6 +56,7 @@ fn main() {
     let mut result2 = 0;
 
     let mut command: Vec<String> = Vec::new(); 
+    let mut commands: Vec<Command> = vec![];
 
     for (i, line) in reader.lines().enumerate() {
         let line = match line {
@@ -72,7 +73,7 @@ fn main() {
                 let cmd = Command::new(&command);
                 command.clear();
 
-                parse_command(&cmd)
+                commands.push(cmd.clone());
             }
         }
         command.push(line.clone());
@@ -83,6 +84,12 @@ fn main() {
         // Solve Part 2
         result2 += 1;
     }
+
+    let mut cwd: Vec<&str> = vec![];
+    let mut dirs: HashMap<&str, usize> = HashMap::new();
+
+
+    println!("{:#?}", commands);
 
     // print result
     println!("Answer part one: {}", result1);
