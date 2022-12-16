@@ -1,4 +1,4 @@
-use std::{fs, collections::{BinaryHeap, BTreeMap}};
+use std::{fs, collections::{BinaryHeap, HashMap}};
 
 
 
@@ -34,72 +34,114 @@ impl<const M: usize, const N: usize> Map<M, N> {
         map
     }
 
-    fn get_adjacent(&self, pos: (usize, usize)) -> Vec<(usize, usize)> {
-        let mut adjacent: Vec<(usize, usize)> = vec![];
+    fn height(&self, pos: &(usize, usize)) -> Option<u8> {
+        if pos.0 < N && pos.1 < M {
+            Some(self.height[pos.0][pos.1])
+        } else {
+            None
+        }
+    }
 
-        // Up
-        // Down
-        // Left
-        // right
-        // TODO
+    fn get_adjacent(&self, pos: &(usize, usize)) -> Vec<(usize, usize)> {
+        const OFFSET: [(i32, i32); 4] = [(-1,0), (1,0), (0,-1), (0,1)];
 
-        adjacent
+        OFFSET.iter()
+            .map(|p| (pos.0 as i32 + p.0, pos.1 as i32 + p.1))
+            .filter(
+                |p| {
+                    (0..N as i32).contains(&p.0) && (0..M as i32).contains(&p.1)
+                })
+            .map(|p| (p.0 as usize, p.1 as usize))
+            .filter(|p| self.height(pos).unwrap()+1 >= self.height(p).unwrap())
+            .collect()
     }
 }
 
 
-#[derive(Eq, PartialOrd, Debug)]
+
+#[derive(Eq, Debug)]
 struct Node {
-    cost: u32,
+    steps: u32,
     pos: (usize, usize)
 }
 
 impl Ord for Node {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        self.cost.cmp(&other.cost)
+        other.steps.cmp(&self.steps)
+    }
+}
+
+impl PartialOrd for Node {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
     }
 }
 
 impl PartialEq for Node {
     fn eq(&self, other: &Self) -> bool {
-        self.cost == other.cost
+        self.cmp(other) == std::cmp::Ordering::Equal
     }
 }
 
-fn part1<const M: usize, const N: usize>(input: &str) -> u32 {
-
-    let mut map: Map<M, N> = Map::from(input);
-
-    println!("{:#?}", map);
-
+// Use Dijkstras algorithm to find the shortest path on the map
+fn find_shortest_path<const M: usize, const N: usize>(map: &Map<M, N>) -> Option<u32> {
     // Dijkstra
     let mut open: BinaryHeap<Node> = BinaryHeap::new();
-    let mut closed: BTreeMap<(usize, usize), u32> = BTreeMap::new();
-    let mut done = false;
+    let mut closed: HashMap<(usize, usize), u32> = HashMap::new();
 
-    open.push(Node {cost: 0, pos: map.start });
+    // Add start
+    open.push(Node {steps: 0, pos: map.start});
 
-    while done {
-        let current = open.pop().unwrap();
+    while let Some(current) = open.pop() {
+        // Check if we've found the end
+        if current.pos.eq(&map.end) {
+            return Some(current.steps);
+        }
 
-        if current.pos == map.end {
-            done = true; 
-        } else {
-            // Add adjacent nodes if possible
-            for pos in map.get_adjacent(current.pos) {
-                open.push(Node {cost: current.cost+1, pos});
+        // Skip if already visited
+        if closed.contains_key(&current.pos) {
+            continue;
+        }
+
+        // Add adjacent nodes if possible
+        for pos in map.get_adjacent(&current.pos) {
+            if !closed.contains_key(&pos) {
+                open.push(Node {steps: current.steps+1, pos});
             }
         }
         
         // The current are done
-        closed.insert(current.pos, current.cost);
+        closed.insert(current.pos, current.steps);
     }
 
-    
-    println!("{:#?}", open);
-    println!("{:#?}", closed);
+    None
+}
 
-    *closed.get(&map.end).unwrap()
+fn part1<const M: usize, const N: usize>(input: &str) -> Option<u32> {
+
+    let map: Map<M, N> = Map::from(input);
+
+    find_shortest_path(&map)
+}
+
+fn part2<const M: usize, const N: usize>(input: &str) -> Option<u32> {
+
+    let mut map: Map<M, N> = Map::from(input);
+
+    let mut shortest = u32::MAX;
+    for row in 0..N {
+        for col in 0..M {
+            let pos = (row, col);
+            if map.height(&pos) == Some(0) {
+                map.start = pos;
+                if let Some(steps) = find_shortest_path(&map) {
+                    shortest = shortest.min(steps);
+                }
+            }
+        }
+    }
+
+    Some(shortest)
 }
 
 
@@ -109,5 +151,10 @@ fn main() {
 
 
     println!("Part1:");
-    println!("Example={}", part1::<8, 5>(input_ex.as_str()));
+    println!("Example={}", part1::<8, 5>(input_ex.as_str()).unwrap());
+    println!("main={}", part1::<71, 41>(input.as_str()).unwrap());
+
+    println!("Part2:");
+    println!("Example={}", part2::<8, 5>(input_ex.as_str()).unwrap());
+    println!("main={}", part2::<71, 41>(input.as_str()).unwrap());
 }
