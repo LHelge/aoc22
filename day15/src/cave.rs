@@ -1,4 +1,4 @@
-use std::{collections::{HashMap, HashSet}};
+use std::{collections::{BTreeMap, HashSet}};
 
 
 
@@ -12,7 +12,7 @@ pub struct Sensor {
 
 #[derive(Debug)]
 pub struct Cave {
-    sensors: HashMap<Coord, u64>,
+    sensors: BTreeMap<Coord, u64>,
     beacons: HashSet<Coord>,
     top_left: Coord,
     bottom_right: Coord
@@ -27,7 +27,7 @@ fn manhattan_distance(one: &Coord, other: &Coord) -> u64 {
 impl Cave {
     pub fn new(sensors: &Vec<Sensor>) -> Self {
         let mut cave = Self {
-            sensors: HashMap::new(),
+            sensors: BTreeMap::new(),
             beacons: HashSet::new(),
             top_left: (i64::MAX, i64::MAX),
             bottom_right: (i64::MIN, i64::MIN)
